@@ -7,31 +7,64 @@ const request = require('request');
 const Telegraf = require('telegraf')
 const config = require('./config.json')
 const utf8 = require('utf8')
-const chatId = null;
 const bot = new Telegraf(config.token)
+const mysql = require('mysql')
 
 express()
   .use(express.static(path.join(__dirname, 'public')))
   .set('views', path.join(__dirname, 'views'))
   .set('view engine', 'ejs')
   .get('/', (req, res) => res.render('pages/index'))
-  .listen(PORT, () => console.log(`Listening on ${ PORT }`))
+  .listen(PORT, () => console.log(`Listening on ${ PORT }`));
 
-
+var client = mysql.createConnection({
+  host: "192.168.1.5",
+  user: "root",
+  password: "",
+  database: "telegram_bot"
+});
 
 var SettingsObj = {day: true, timing: true}
 
-var ChatsArr = [];
+var UsersAllowTimingArr = [];
+
+var UsersAllowDay = [];
+
+setInterval(function() {
+  client.query('SELECT 1');
+}, 5000);
+
+// bot.start((ctx) => {
+//   console.log(UsersAllowTimingArr);
+//   if(UsersAllowTimingArr.indexOf(ctx.from.id) == -1) {
+//     UsersAllowTimingArr.push(ctx.from.id);
+//   }
+  
+//   console.log('started:', ctx.from.id)
+//   var first_msg = "Здравствуйте, господин! \nМеня зовут Юми-чан, я буду помогать вам с ежедневными делами, что бы взаимодействовать со мной, можете использовать эти команды:\n\n/YumiBot - Покажу все доступные команды для взаимодействия. \n/week Покажу расписание на всю неделю. \n/day Покажу рассписание на определённый день. \n/dayon Буду уведомлять вас о расписании в начале дня. \n/dayoff Перестану уведомлять о расписании. \n/timingon Уведомлю вас о скорейшем окончании урока. \n/timingoff Перестану уведомлять о скорейшем окончании урока. \n/homework Покажу вам домашнее задание на неделю. \n/daywork Покажу вам домашнее задание на определённый день.  \n\nВот все мои возможности, надеюсь буду вам полезна:3";
+//   return ctx.reply(first_msg)
+// })
 
 bot.start((ctx) => {
-  console.log(ChatsArr);
-  if(ChatsArr.indexOf(ctx.from.id) == -1) {
-    ChatsArr.push(ctx.from.id);
-  }
-  
-  console.log('started:', ctx.from.id)
-  var first_msg = "Здравствуйте, господин! \nМеня зовут Юми-чан, я буду помогать вам с ежедневными делами, что бы взаимодействовать со мной, можете использовать эти команды:\n\n/YumiBot - Покажу все доступные команды для взаимодействия. \n/week Покажу расписание на всю неделю. \n/day Покажу рассписание на определённый день. \n/dayon Буду уведомлять вас о расписании в начале дня. \n/dayoff Перестану уведомлять о расписании. \n/timingon Уведомлю вас о скорейшем окончании урока. \n/timingoff Перестану уведомлять о скорейшем окончании урока. \n/homework Покажу вам домашнее задание на неделю. \n/daywork Покажу вам домашнее задание на определённый день.  \n\nВот все мои возможности, надеюсь буду вам полезна:3";
-  return ctx.reply(first_msg)
+  console.log('started:', ctx.from.id);
+
+  client.query(mysql.format("SELECT * FROM users WHERE chat = \"" + ctx.from.id + "\""), function(error, result, fields) {
+    if (error) throw error;
+    var first_msg = "Err";
+    if(result.length != 0) {
+      first_msg = "Здравствуйте, " + result[0].name + "! \nЧем я могу быть полезна?";
+    } else {
+      console.log("NEW_USER");
+      first_msg = "Введите имя.";
+      bot.on('text', (ctx) => {
+        client.query(mysql.format("INSERT INTO users(id, chat, name, timing, day) VALUES (NULL, " + ctx.from.id + ", '" + ctx.message.text + "', 1, 1)"), function(error, result, fields) {
+          ctx.reply("Здравствуйте, господин! \nМеня зовут Юми-чан, я буду помогать вам с ежедневными делами, что бы взаимодействовать со мной, можете использовать эти команды:\n\n/YumiBot - Покажу все доступные команды для взаимодействия. \n/week Покажу расписание на всю неделю. \n/day Покажу рассписание на определённый день. \n/dayon Буду уведомлять вас о расписании в начале дня. \n/dayoff Перестану уведомлять о расписании. \n/timingon Уведомлю вас о скорейшем окончании урока. \n/timingoff Перестану уведомлять о скорейшем окончании урока. \n/homework Покажу вам домашнее задание на неделю. \n/daywork Покажу вам домашнее задание на определённый день.  \n\nВот все мои возможности, надеюсь буду вам полезна:3");
+        });
+      })
+    }
+
+    return ctx.reply(first_msg);
+  });
 })
 
 var schedule = [
@@ -95,14 +128,14 @@ bot.hears('Лёщионизм', (ctx) => ctx.reply('Лёщионизм -- как
 bot.command('YumiBot', (ctx) => ctx.reply("/help - Покажу все доступные команды для взаимодействия. \n/week Покажу расписание на всю неделю. \n/day Покажу рассписание на определённый день. \n/dayon Буду уведомлять вас о расписании в начале дня. \n/dayoff Перестану уведомлять о расписании. \n/timingon Уведомлю вас о скорейшем окончании урока. \n/timingoff Перестану уведомлять о скорейшем окончании урока. \n/homework Покажу вам домашнее задание на неделю. \n/daywork Покажу вам домашнее задание на определённый день."))
 
 bot.command('week', (ctx) => ctx.reply("Понедельник \n1. (325) Алгебра \n2. (325) Алгебра \n3. (305) История Украины \n4. (305) История Украины \n5. (216) Физика\n6. (216) Физика\n\n\nВторник\n1. (325) Украинский язык\n2. (325) Украинский язык \n3. (306) Английский язык \n4. (306) Английский язык \n5. (224) Украинская литература \n6. (224) Украинская литература \n7. (103,213) Информатика\n\nСреда\n1. (206) География \n2. (328) Украинский язык \n3. (206) Зарубежная литература \n4. (305) Всемирная история \n5. (319) Химия\n6. (305) Правоведение \n7. Физическая культура\n\nЧетверг \n1. (104) Биология\n2. (305) История Украины \n3. (325) Геометрия \n4. (325) Геометрия \n5. (104/206) Биология / География\n6. (305) История Украины \n7. (306) Английский язык\n\n\nПятница\n1. (318) Немецкий\n2. (318/215,314) Немецкий / Защита отечества \n3. (215,314) Защита отечества \n4. (328) Украинский язык \n5. Физическая культура \n6. (103,213) Технологии \n7. (209) Художественная культура"));
-bot.command('time', (ctx) => { var d = new Date();ctx.reply((d.getHours()+2) + ":" + d.getMinutes())});
+bot.command('time', (ctx) => { var d = new Date();ctx.reply((d.getHours()+1) + ":" + d.getMinutes())});
 bot.command('day', (ctx) => { var d = new Date(); var today = d.getDay();ctx.reply(schedule[today])});
 
-bot.command('dayon', (ctx) => { console.log("DAYON");SettingsObj.day = true;ctx.reply("DAY:" + SettingsObj.day); })
-bot.command('dayoff', (ctx) => { console.log("DAYOFF");SettingsObj.day = false;ctx.reply("DAY:" + SettingsObj.day); })
+bot.command('dayon', (ctx) => { console.log("DAYON");client.query(mysql.format("UPDATE users SET day = '1' WHERE chat = '" + ctx.from.id + "'"));ctx.reply("DAY:" + "true"); })
+bot.command('dayoff', (ctx) => { console.log("DAYOFF");client.query(mysql.format("UPDATE users SET day = '0' WHERE chat = '" + ctx.from.id + "'"));ctx.reply("DAY:" + "false"); })
 
-bot.command('timingon', (ctx) => { console.log("timingon");SettingsObj.timing = true;ctx.reply("timing:" + SettingsObj.timing); })
-bot.command('timingoff', (ctx) => { console.log("timingoff");SettingsObj.timing = false;ctx.reply("timing:" + SettingsObj.timing); })
+bot.command('timingon', (ctx) => { console.log("timingon");client.query(mysql.format("UPDATE users SET timing = '1' WHERE chat = '" + ctx.from.id + "'"));ctx.reply("timing:" + "true"); })
+bot.command('timingoff', (ctx) => { console.log("timingoff");client.query(mysql.format("UPDATE users SET timing = '0' WHERE chat = '" + ctx.from.id + "'"));ctx.reply("timing:" + "false"); })
 
 // RANDOM DAY REPLICAS
 var randomDayReplicas = {
@@ -437,90 +470,102 @@ function getRandom(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 } 
 
+var UsersAllowTimingArr = [];
+var UsersAllowTiming = function(callback) {
+
+  client.query(mysql.format("SELECT * FROM users WHERE timing = '1'"), function(error, result, fields) {
+    if(result.length) {
+      for(var i = 0;i < result.length;i++) {
+        UsersAllowTimingArr.push(result[i].chat);
+      }
+    }
+    callback(null, result);
+  });
+}
+
+UsersAllowTiming(function () {
+  console.log(UsersAllowTimingArr);
+
+
 setInterval(function(ctx) {
   var d = new Date();
-  var hour_now = d.getHours() + 2;
+  var hour_now = d.getHours() + 1;
   var minutes_now = d.getMinutes();
   var day_now = d.getDay();
-  if(SettingsObj.day == true && day_now != 0 && day_now != 6) {
+  if(day_now != 0 && day_now != 6) {
 
-    if(hour_now == 20 && minutes_now == 00 && day_now == 1) {
-      ChatsArr.forEach(function(entry) {
+    if(hour_now == 20 && minutes_now == 0 && day_now == 1) {
+      UsersAllowTimingArr.forEach(function(entry) {
         var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomDayReplicas.monday[getRandom(0, 4)]);
         request.get({ uri: host_req, encoding: 'utf-8' });
       })
     }
-    if(hour_now == 7 && minutes_now == 00 && day_now == 2) {
-      ChatsArr.forEach(function(entry) {
+    if(hour_now == 7 && minutes_now == 0 && day_now == 2) {
+      UsersAllowTimingArr.forEach(function(entry) {
         var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomDayReplicas.tuesday[getRandom(0, 4)]);
         request.get({ uri: host_req, encoding: 'utf-8' });
       })
     }
-    if(hour_now == 7 && minutes_now == 00 && day_now == 3) {
-      ChatsArr.forEach(function(entry) {
+    if(hour_now == 7 && minutes_now == 0 && day_now == 3) {
+      UsersAllowTimingArr.forEach(function(entry) {
         var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomDayReplicas.wednesday[getRandom(0, 4)]);
         request.get({ uri: host_req, encoding: 'utf-8' });
       })
     }
-    if(hour_now == 7 && minutes_now == 00 && day_now == 4) {
-      ChatsArr.forEach(function(entry) {
+    if(hour_now == 7 && minutes_now == 0 && day_now == 4) {
+      UsersAllowTimingArr.forEach(function(entry) {
         var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomDayReplicas.thursday[getRandom(0, 4)]);
         request.get({ uri: host_req, encoding: 'utf-8' });
       })
     }
-    if(hour_now == 7 && minutes_now == 00 && day_now == 5) {
-      ChatsArr.forEach(function(entry) {
+    if(hour_now == 7 && minutes_now == 0 && day_now == 5) {
+      UsersAllowTimingArr.forEach(function(entry) {
         var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomDayReplicas.friday[getRandom(0, 4)]);
         request.get({ uri: host_req, encoding: 'utf-8' });
       })
     }
   }
   if(SettingsObj.timing == true) {
-    var d = new Date();
-    var hour_now = d.getHours() + 2;
-    var minutes_now = d.getMinutes();
     console.log(hour_now + ":" + minutes_now);
-
-    var outoflesson = 'http://avarice.ga/alarm.ogg'; 
 
     // first
     if(hour_now == 10 && minutes_now == 10) {
-      ChatsArr.forEach(function(entry) {
+      UsersAllowTimingArr.forEach(function(entry) {
         var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomAlarmReplicas.all[getRandom(0, 10)]);
         request.get({ uri: host_req, encoding: 'utf-8' });
       })
     }
     // second
-    if(hour_now == 11 && minutes_now == 00) {
-      ChatsArr.forEach(function(entry) {
+    if(hour_now == 11 && minutes_now == 0) {
+      UsersAllowTimingArr.forEach(function(entry) {
         var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomAlarmReplicas.all[getRandom(0, 10)]);
         request.get({ uri: host_req, encoding: 'utf-8' });
       })
     }
     // third
     if(hour_now == 11 && minutes_now == 45) {
-      ChatsArr.forEach(function(entry) {
+      UsersAllowTimingArr.forEach(function(entry) {
         var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomAlarmReplicas.all[getRandom(0, 10)]);
         request.get({ uri: host_req, encoding: 'utf-8' });
       })
     }
     // fourth
     if(hour_now == 12 && minutes_now == 50) {
-      ChatsArr.forEach(function(entry) {
+      UsersAllowTimingArr.forEach(function(entry) {
         var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomAlarmReplicas.Four[getRandom(0, 5)]);
         request.get({ uri: host_req, encoding: 'utf-8' });
       })
     }
     // fourth end
     if(hour_now == 13 && minutes_now == 8) {
-      ChatsArr.forEach(function(entry) {
+      UsersAllowTimingArr.forEach(function(entry) {
         var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomAlarmReplicas.endFour[getRandom(0, 5)]);
         request.get({ uri: host_req, encoding: 'utf-8' });
       })
     }
     // fifth
     if(hour_now == 13 && minutes_now == 40) {
-      ChatsArr.forEach(function(entry) {
+      UsersAllowTimingArr.forEach(function(entry) {
         var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomAlarmReplicas.all[getRandom(0, 10)]);
         request.get({ uri: host_req, encoding: 'utf-8' });
       })
@@ -528,12 +573,12 @@ setInterval(function(ctx) {
     // sixth
     if(hour_now == 14 && minutes_now == 30) {
       if(day_now == 1) {
-        ChatsArr.forEach(function(entry) {
+        UsersAllowTimingArr.forEach(function(entry) {
           var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomAlarmReplicas.lastLeasson[getRandom(0, 5)]);
           request.get({ uri: host_req, encoding: 'utf-8' });
         })
       } else {
-        ChatsArr.forEach(function(entry) {
+        UsersAllowTimingArr.forEach(function(entry) {
           var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomAlarmReplicas.friday[getRandom(0, 10)]);
           request.get({ uri: host_req, encoding: 'utf-8' });
         })
@@ -542,7 +587,7 @@ setInterval(function(ctx) {
     }
     // seventh
     if(hour_now == 14 && minutes_now == 30 && day_now != 1) {
-      ChatsArr.forEach(function(entry) {
+      UsersAllowTimingArr.forEach(function(entry) {
         var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry +"&text=" + utf8.encode(randomAlarmReplicas.lastLeasson[getRandom(0, 5)]);
         request.get({ uri: host_req, encoding: 'utf-8' });
       })
@@ -551,6 +596,7 @@ setInterval(function(ctx) {
     }
 
 }, 60000)
+});
 
 // STICKER
 bot.on('sticker', (ctx) => ctx.reply('👍'))
