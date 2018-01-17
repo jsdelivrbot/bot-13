@@ -17,11 +17,17 @@ express()
   .get('/', (req, res) => res.render('pages/index'))
   .listen(PORT, () => console.log(`Listening on ${ PORT }`));
 
+// var client = mysql.createConnection({
+//   host: "192.168.1.5",
+//   user: "root",
+//   password: "",
+//   database: "telegram_bot"
+// });
 var client = mysql.createConnection({
-  host: "192.168.1.5",
-  user: "root",
-  password: "",
-  database: "telegram_bot"
+  host: "	bh4tcqpll-mysql.services.clever-cloud.com",
+  user: "uigkq5wv7otxyqt6",
+  password: "Y0vwehp8AMX6Wjk0Omp",
+  database: "bh4tcqpll"
 });
 
 var SettingsObj = {day: true, timing: true}
