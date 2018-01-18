@@ -24,10 +24,10 @@ express()
 //   database: "telegram_bot"
 // });
 var client = mysql.createConnection({
-  host: "sql110.epizy.com",
-  user: "epiz_20780294",
-  password: "HWUGv5w8AX",
-  database: "epiz_20780294_bot"
+  host: "bh4tcqpll-mysql.services.clever-cloud.com",
+  user: "uigkq5wv7otxyqt6",
+  password: "Y0vwehp8AMX6Wjk0Omp",
+  database: "bh4tcqpll"
 });
 
 var SettingsObj = {day: true, timing: true}
