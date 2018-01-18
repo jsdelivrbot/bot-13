@@ -1,28 +1,48 @@
-const { spawn } = require('child_process');
-const request = require('request');
-const test = require('tape');
 
-// Start the app
-const env = Object.assign({}, process.env, {PORT: 5000});
-const child = spawn('node', ['index.js'], {env});
+moment.locale('ru');
+var maxWeek = 45;
 
-test('responds to requests', (t) => {
-  t.plan(4);
+function getISOWeeks(y) {
+  var d, isLeap;
+  d = new Date(y, 0, 1);
+  isLeap = new Date(y, 1, 29).getMonth() === 1;
+  return d.getDay() === 4 || isLeap && d.getDay() === 3 ? 53 : 52
+}
 
-  // Wait until the server is ready
-  child.stdout.on('data', _ => {
-    // Make a request to our app
-    request('http://127.0.0.1:5000', (error, response, body) => {
-      // stop the server
-      child.kill();
+var curWeek = '',
+  years = '';
 
-      // No error
-      t.false(error);
-      // Successful response
-      t.equal(response.statusCode, 200);
-      // Assert content checks
-      t.notEqual(body.indexOf("<title>Node.js Getting Started on Heroku</title>"), -1);
-      t.notEqual(body.indexOf("Getting Started with Node on Heroku"), -1);
-    });
-  });
-});
+var today, year, week, prevYear, nextYear, this1sp, this1spF, prev1sp, prev1spF, chetnaya;
+
+function update() {
+  today = moment();
+  year = moment(today).format('YYYY')
+  prevYear = moment(today).subtract(1, 'y').format('YYYY');
+  nextYear = +year + 1 + ''
+
+  this1sp = moment(year + '-09-01', 'YYYY-MM-DD');
+  this1spF = this1sp.format('WW');
+  prev1sp = moment(year + '-09-01', 'YYYY-MM-DD').subtract(1, 'year');
+  prev1spF = prev1sp.format('WW');
+
+  week = moment(today).format('WW');
+
+  if (today.isBefore(this1sp)) {
+    var daysInYear = getISOWeeks(+prevYear);
+    years = prevYear + '/' + year;
+    curWeek = daysInYear - prev1spF + +week;
+
+  } else {
+    years = year + '/' + nextYear;
+    curWeek = week - this1spF + 1;
+  }
+
+  if (curWeek > maxWeek) {
+    chetnaya = false
+    return
+  }
+
+  chetnaya = !(curWeek % 2);
+}
+
+update();
