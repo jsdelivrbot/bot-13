@@ -24,10 +24,10 @@ const mysql = require('mysql')
 //   database: "telegram_bot"
 // });
 var client = mysql.createConnection({
-  host: process.env.OPENSHIFT_MYSQL_DB_HOST,
-  user: "userMDM",
-  password: "WhgYvI2efAtKRFaS",
-  database: "botdb"
+  host: "sql110.epizy.com",
+  user: "epiz_20780294",
+  password: "HWUGv5w8AX",
+  database: "epiz_20780294_bot"
 });
 
 var SettingsObj = {day: true, timing: true}
