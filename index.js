@@ -24,10 +24,10 @@ express()
 //   database: "telegram_bot"
 // });
 var client = mysql.createConnection({
-  host: "bh4tcqpll-mysql.services.clever-cloud.com",
-  user: "uigkq5wv7otxyqt6",
-  password: "Y0vwehp8AMX6Wjk0Omp",
-  database: "bh4tcqpll"
+  host: process.env.OPENSHIFT_MYSQL_DB_HOST,
+  user: "userMDM",
+  password: "WhgYvI2efAtKRFaS",
+  database: "botdb"
 });
 
 var SettingsObj = {day: true, timing: true}
@@ -525,7 +525,7 @@ setInterval(function(ctx) {
           var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry.chat +"&text=" + utf8.encode("Примечание: у вас сегодня классный час на 8:00, поторопитесь!");
           request.get({ uri: host_req, encoding: 'utf-8' });
         }
-        if(hour_now == 21 && minutes_now == 55 && day_now == 4) {
+        if(hour_now == 7 && minutes_now == 0 && day_now == 5) {
           if(getCurrendWeek()) {
             var host_req = "https://api.telegram.org/bot392530919:AAG--VunCAxOIUmu2X2mzjORDnowNR0CPx8/sendMessage?chat_id="+ entry.chat +"&text=" + utf8.encode(randomDayReplicas.friday[0][getRandom(0, 2)]);
             request.get({ uri: host_req, encoding: 'utf-8' });
